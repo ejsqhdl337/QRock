@@ -8,8 +8,9 @@ import zbar
 import RPi.GPIO as g
 import threading
 
+g.setwarnings(False)
 #SerialNumberSet
-SERIALNUMBER = "WEAREKZZ"
+SERIALNUMBER = "YHCO234"
 #GPIOSet
 g.setmode(g.BCM)
 #0 is Close, 1 is Open
@@ -17,9 +18,9 @@ DRStat = 0
 #pinNumberSet (5,6) == (1,0) is Open
 motOpen = 5
 motClose = 6
-rgbR = (16,26)
-rgbG = (20,19)
-rgbB = (21,13)
+rgbR = [16,26]
+rgbG = [20,19]
+rgbB = [21,13]
 startBtn = 25
 tglBtn = 12
 lmtStch = 24
@@ -56,13 +57,13 @@ def refreshTkn():
     header={"Content-type":"application/x-www-form-urlencoded"}
     data = {}
     data['serial_number']=SERIALNUMBER
-    r = request.post("http://youngh.cafe24app.com/iot/token",headers=header,data=data)
+    r = request.post("http://qrock.cafe24app.com/iot/token",headers=header,data=data)
     jsonData = json.loads(r.text)
     if jsonData[0]['code']=='fail':
         for i in range(3):
-            ledTurn((rgbR,rgbG))
+            ledTurn([rgbR,rgbG])
             time.sleep(0.8)
-            ledTurn(())
+            ledTurn([])
             time.sleep(0.8)
     else:
         tknValue = jsonData[1]['token']
@@ -76,7 +77,7 @@ def CheckPart():
     while True:
         my_stream = io.BytesIO()
 
-        if timeOut >= 3:
+        if timeOut >= 7:
             return
 
         with picamera.PiCamera() as camera :
@@ -96,14 +97,19 @@ def CheckPart():
 
         scanner.scan(dcdImg)
 
-        print "QR Code Sencing"
-        
+        #print "QR Code Sencing"
         for symbol in dcdImg:
             #print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+            #time.sleep(0.5)
             if symbol.data != None:
-                    primary_key = symbol.data.split(',')[0]
-                    user_email = symbol.data.split(',')[1]
-                    qrock_key = symbol.data.split(',')[2]
+                    try:
+                        primary_key = symbol.data.split(',')[0]
+                        user_email = symbol.data.split(',')[1]
+                        qrock_key = symbol.data.split(',')[2]
+                    except:
+                        primary_key = ''
+                        user_email = ''
+                        qrock_key = ''
                     data = {}
                     data['qrock_pk'] = primary_key
                     data['serial_number'] = SERIALNUMBER
@@ -112,7 +118,7 @@ def CheckPart():
                     while True:
                         header={"Content-type":"application/x-www-form-urlencoded","x-access-token":tknValue[0]}
                         #print header
-                        r = request.post("http://youngh.cafe24app.com/iot/select",headers=header,data=data)
+                        r = request.post("http://qrock.cafe24app.com/iot/select",headers=header,data=data)
                         #print r.text
                         jsonData = json.loads(r.text)
                         #Exception Handling : success, fail
@@ -124,9 +130,9 @@ def CheckPart():
                             #print "token refresh"
                             refreshTkn()
                         elif jsonData[0][u'code'] == "fail" :
-                            #print "It's wrong code"
+                            print "It's wrong code"
                             for i in range(3):
-                                ledTurn((rgbR))
+                                ledTurn([rgbR])
                                 time.sleep(0.8)
                                 ledTurn(())
                                 time.sleep(0.8)
@@ -147,7 +153,18 @@ g.setup(lmtStch,g.IN)
 #motorSet
 mtrAction(motClose)
 #ledSet
-ledTurn(())
+ledTurn([])
+#internetSet
+try:
+    request.post("http://www.naver.com")
+except request.exceptions.ConnectionError:
+    #print "internet Connection error"
+    for i in range(3):
+        ledTurn([rgbR,rgbG])
+        time.sleep(0.8)
+        ledTurn([])
+        time.sleep(0.8)
+    exit()
 #tokenSet
 try:
     f = open('QRCODE_LOCK.token','r')
@@ -160,16 +177,17 @@ flagS = False
 def CameraPart():
     global flagS
     while True:
+        print "1"
         if g.input(startBtn) == True:
             flagS = True
-            ledTurn((rgbR,rgbG,rgbB))
+            ledTurn([rgbR,rgbG,rgbB])
             continue
         if flagS == True:
             CheckPart()
             #print "Scanning end"
             flagS = False
         else:
-            ledTurn(())
+            ledTurn([])
             
 flag = False
 ct = 0
@@ -179,6 +197,7 @@ def SensPart():
     global flag
     global ct
     while True:
+        print "2"
         if  DRStat == 1 :
             if g.input(lmtStch) == False :
                 if ct >= 7 :
@@ -227,14 +246,14 @@ while True:
             ct = 0
     if g.input(startBtn) == True:
             flagS = True
-            ledTurn((rgbR,rgbG,rgbB))
+            ledTurn([rgbR,rgbG,rgbB])
             continue
         if flagS = True:
             CheckPart()
             print "Scanning end"
             flagS = False
         else
-            ledTurn(())
+            ledTurn([])
     if g.input(tglBtn) == True :
         #print 'push1'
         flag = True
