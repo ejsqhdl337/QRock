@@ -26,17 +26,6 @@ tglBtn = 12
 lmtStch = 24
 #token
 tknValue = ""
-def internetCheck():
-    try:
-        request.post("http://www.naver.com")
-    except request.exceptions.ConnectionError:
-        #print "internet Connection error"
-        for i in range(3):
-            ledTurn([rgbR,rgbG])
-            time.sleep(0.8)
-            ledTurn([])
-            time.sleep(0.8)
-        exit()
 def mtrAction(mtrPin):
     mtrOther = 0
     global DRStat
@@ -166,7 +155,16 @@ mtrAction(motClose)
 #ledSet
 ledTurn([])
 #internetSet
-internetCheck()
+try:
+    request.post("http://www.naver.com")
+except request.exceptions.ConnectionError:
+    #print "internet Connection error"
+    for i in range(3):
+        ledTurn([rgbR,rgbG])
+        time.sleep(0.8)
+        ledTurn([])
+        time.sleep(0.8)
+    exit()
 #tokenSet
 try:
     f = open('QRCODE_LOCK.token','r')
@@ -185,7 +183,6 @@ def CameraPart():
             ledTurn([rgbR,rgbG,rgbB])
             continue
         if flagS == True:
-            internetCheck()
             CheckPart()
             #print "Scanning end"
             flagS = False
