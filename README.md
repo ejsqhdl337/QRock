@@ -1,2 +1,2 @@
 # QRock
-It's digital DoorLock that used QRcode
+It's digital DoorLock used QRcode
